@@ -198,7 +198,7 @@ division divide (.i_divisor({1'b1,InputB[22:0],8'd0}),
                     // NaN = 32'hFFFFFFFFF
                  
                  // GENERAL CASE
-assign AbyB = case0 ? 0 :  casePinf ? 32'h7F800000 : caseNinf ? 32'hFF800000 : caseNaN ? 32'h7FFFFFF0 :  {signAbyB,expAbyB,mantAbyB};
+assign AbyB = caseNaN ? 32'h7FFFFFF0 : case0 ? 0 :  casePinf ? 32'h7F800000 : caseNinf ? 32'hFF800000 : {signAbyB,expAbyB,mantAbyB};
 
 //assign AbyB = {signAbyB,expAbyB,mantAbyB};
 
