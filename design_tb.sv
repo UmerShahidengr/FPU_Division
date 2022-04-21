@@ -30,7 +30,7 @@ real EPSILON=0.00001;
 real error;  
   
 integer i, fail=0, pass=0, Spass=0, Sfail=0;
-  division tester( A, B, result);
+  fpdiv tester( result, A, B);
 
 
 initial  
@@ -89,7 +89,7 @@ valueB = $bitstoshortreal(B);
   #15
   value =$bitstoshortreal(result);
   error = (value - (valueA/valueB));
-  error = error * error;
+  error = error<0 ? -error : error;
   
   
     if( error < EPSILON ) begin
