@@ -1,381 +1,205 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 10xEngineers
+// Engineer: Umer Shahid
+// 
+// Create Date: 04/12/2022 09:39:13 PM
+// Design Name: Floating Point Division
+// Module Name: FP_div
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
 
+
+module get_sign(A, B, sign); // this is to get the sign of the output
+  input A, B;
+  output sign;
+
+  xor(sign,A,B);
+endmodule
+
+module division (i_divisor, i_dividend, result, expo, expA, expB);
+  //reg [23:0];
+  input wire [7:0] expA, expB;
+  input [31:0]i_dividend, i_divisor;
+  reg [23:0]quotient=0;
+  reg [7:0]exponent_diff = 8'd0;
+  output reg [7:0]expo=0;
+  reg first_bit = 1'b0;
+  reg done = 1'b0;
+  output reg [22:0]result=0;
+  reg [32:0] dividend=0, divisor=0;
+  integer i;
+  reg[1:0] stateA, next_stateA, stateB, next_stateB;
   
-// Priority Encoder
-
-module priority_encoder(
-			input [24:0] significand,
-			input [7:0] exp_a,
-			output reg [24:0] Significand,
-			output [7:0] exp_sub
-			);
-
-reg [4:0] shift;
-
-always @(significand)
-begin
-	casex (significand)
-		25'b1_1xxx_xxxx_xxxx_xxxx_xxxx_xxxx :	begin
-													Significand = significand;
-									 				shift = 5'd0;
-								 			  	end
-		25'b1_01xx_xxxx_xxxx_xxxx_xxxx_xxxx : 	begin						
-										 			Significand = significand << 1;
-									 				shift = 5'd1;
-								 			  	end
-
-		25'b1_001x_xxxx_xxxx_xxxx_xxxx_xxxx : 	begin						
-										 			Significand = significand << 2;
-									 				shift = 5'd2;
-								 				end
-
-		25'b1_0001_xxxx_xxxx_xxxx_xxxx_xxxx : 	begin 							
-													Significand = significand << 3;
-								 	 				shift = 5'd3;
-								 				end
-
-		25'b1_0000_1xxx_xxxx_xxxx_xxxx_xxxx : 	begin						
-									 				Significand = significand << 4;
-								 	 				shift = 5'd4;
-								 				end
-
-		25'b1_0000_01xx_xxxx_xxxx_xxxx_xxxx : 	begin						
-									 				Significand = significand << 5;
-								 	 				shift = 5'd5;
-								 				end
-
-		25'b1_0000_001x_xxxx_xxxx_xxxx_xxxx : 	begin						// 24'h020000
-									 				Significand = significand << 6;
-								 	 				shift = 5'd6;
-								 				end
-
-		25'b1_0000_0001_xxxx_xxxx_xxxx_xxxx : 	begin						// 24'h010000
-									 				Significand = significand << 7;
-								 	 				shift = 5'd7;
-								 				end
-
-		25'b1_0000_0000_1xxx_xxxx_xxxx_xxxx : 	begin						// 24'h008000
-									 				Significand = significand << 8;
-								 	 				shift = 5'd8;
-								 				end
-
-		25'b1_0000_0000_01xx_xxxx_xxxx_xxxx : 	begin						// 24'h004000
-									 				Significand = significand << 9;
-								 	 				shift = 5'd9;
-								 				end
-
-		25'b1_0000_0000_001x_xxxx_xxxx_xxxx : 	begin						// 24'h002000
-									 				Significand = significand << 10;
-								 	 				shift = 5'd10;
-								 				end
-
-		25'b1_0000_0000_0001_xxxx_xxxx_xxxx : 	begin						// 24'h001000
-									 				Significand = significand << 11;
-								 	 				shift = 5'd11;
-								 				end
-
-		25'b1_0000_0000_0000_1xxx_xxxx_xxxx : 	begin						// 24'h000800
-									 				Significand = significand << 12;
-								 	 				shift = 5'd12;
-								 				end
-
-		25'b1_0000_0000_0000_01xx_xxxx_xxxx : 	begin						// 24'h000400
-									 				Significand = significand << 13;
-								 	 				shift = 5'd13;
-								 				end
-
-		25'b1_0000_0000_0000_001x_xxxx_xxxx : 	begin						// 24'h000200
-									 				Significand = significand << 14;
-								 	 				shift = 5'd14;
-								 				end
-
-		25'b1_0000_0000_0000_0001_xxxx_xxxx  : 	begin						// 24'h000100
-									 				Significand = significand << 15;
-								 	 				shift = 5'd15;
-								 				end
-
-		25'b1_0000_0000_0000_0000_1xxx_xxxx : 	begin						// 24'h000080
-									 				Significand = significand << 16;
-								 	 				shift = 5'd16;
-								 				end
-
-		25'b1_0000_0000_0000_0000_01xx_xxxx : 	begin						// 24'h000040
-											 		Significand = significand << 17;
-										 	 		shift = 5'd17;
-												end
-
-		25'b1_0000_0000_0000_0000_001x_xxxx : 	begin						// 24'h000020
-									 				Significand = significand << 18;
-								 	 				shift = 5'd18;
-								 				end
-
-		25'b1_0000_0000_0000_0000_0001_xxxx : 	begin						// 24'h000010
-									 				Significand = significand << 19;
-								 	 				shift = 5'd19;
-												end
-
-		25'b1_0000_0000_0000_0000_0000_1xxx :	begin						// 24'h000008
-									 				Significand = significand << 20;
-								 					shift = 5'd20;
-								 				end
-
-		25'b1_0000_0000_0000_0000_0000_01xx : 	begin						// 24'h000004
-									 				Significand = significand << 21;
-								 	 				shift = 5'd21;
-								 				end
-
-		25'b1_0000_0000_0000_0000_0000_001x : 	begin						// 24'h000002
-									 				Significand = significand << 22;
-								 	 				shift = 5'd22;
-								 				end
-
-		25'b1_0000_0000_0000_0000_0000_0001 : 	begin						// 24'h000001
-									 				Significand = significand << 23;
-								 	 				shift = 5'd23;
-								 				end
-
-		25'b1_0000_0000_0000_0000_0000_0000 : 	begin						// 24'h000000
-								 					Significand = significand << 24;
-							 	 					shift = 5'd24;
-								 				end
-		default : 	begin
-						Significand = (~significand) + 1'b1;
-						shift = 8'd0;
-					end
-
-	endcase
-end
-assign exp_sub = exp_a - shift;
-
-endmodule
-
-//Addition and Subtraction
-
-module Addition_Subtraction(
-input [31:0] a,b,
-input add_sub_signal,														// If 1 then addition otherwise subtraction
-output exception,
-output [31:0] res      
-);
-
-wire operation_add_sub_signal;
-wire enable;
-wire output_sign;
-
-wire [31:0] op_a,op_b;
-wire [23:0] significand_a,significand_b;
-wire [7:0] exponent_diff;
-
-
-wire [23:0] significand_b_add_sub;
-wire [7:0] exp_b_add_sub;
-
-wire [24:0] significand_add;
-wire [30:0] add_sum;
-
-wire [23:0] significand_sub_complement;
-wire [24:0] significand_sub;
-wire [30:0] sub_diff;
-wire [24:0] subtraction_diff; 
-wire [7:0] exp_sub;
-
-assign {enable,op_a,op_b} = (a[30:0] < b[30:0]) ? {1'b1,b,a} : {1'b0,a,b};							// For operations always op_a must not be less than b
-
-assign exp_a = op_a[30:23];
-assign exp_b = op_b[30:23];
-
-assign exception = (&op_a[30:23]) | (&op_b[30:23]);										// Exception flag sets 1 if either one of the exponent is 255.
-
-assign output_sign = add_sub_signal ? enable ? !op_a[31] : op_a[31] : op_a[31] ;
-
-assign operation_add_sub_signal = add_sub_signal ? op_a[31] ^ op_b[31] : ~(op_a[31] ^ op_b[31]);				// Assign significand values according to Hidden Bit.
-
-assign significand_a = (|op_a[30:23]) ? {1'b1,op_a[22:0]} : {1'b0,op_a[22:0]};							// If exponent is zero,hidden bit = 0,else 1
-assign significand_b = (|op_b[30:23]) ? {1'b1,op_b[22:0]} : {1'b0,op_b[22:0]};
-
-assign exponent_diff = op_a[30:23] - op_b[30:23];										// Exponent difference calculation
-
-assign significand_b_add_sub = significand_b >> exponent_diff;
-
-assign exp_b_add_sub = op_b[30:23] + exponent_diff; 
-
-assign perform = (op_a[30:23] == exp_b_add_sub);										// Checking if exponents are same
-
-// Add Block //
-assign significand_add = (perform & operation_add_sub_signal) ? (significand_a + significand_b_add_sub) : 25'd0; 
-
-assign add_sum[22:0] = significand_add[24] ? significand_add[23:1] : significand_add[22:0];					// res will be most 23 bits if carry generated, else least 22 bits.
-
-assign add_sum[30:23] = significand_add[24] ? (1'b1 + op_a[30:23]) : op_a[30:23];						// If carry generates in sum value then exponent is added with 1 else feed as it is.
-
-// Sub Block //
-assign significand_sub_complement = (perform & !operation_add_sub_signal) ? ~(significand_b_add_sub) + 24'd1 : 24'd0 ; 
-
-assign significand_sub = perform ? (significand_a + significand_sub_complement) : 25'd0;
-
-priority_encoder pe(significand_sub,op_a[30:23],subtraction_diff,exp_sub);
-
-assign sub_diff[30:23] = exp_sub;
-
-assign sub_diff[22:0] = subtraction_diff[22:0];
-
-
-// Output //
-assign res = exception ? 32'b0 : ((!operation_add_sub_signal) ? {output_sign,sub_diff} : {output_sign,add_sum});
-
-endmodule
-
-
-// Multiplication
-module Multiplication(
-		input [31:0] a,
-		input [31:0] b,
-		output exception,overflow,underflow,
-		output [31:0] res
-		);
-
-wire sign,product_round,normalised,zero;
-wire [8:0] exponent,sum_exponent;
-wire [22:0] product_mantissa;
-wire [23:0] op_a,op_b;
-wire [47:0] product,product_normalised; //48 Bits
-
-
-assign sign = a[31] ^ b[31];   													// XOR of 32nd bit
-
-assign exception = (&a[30:23]) | (&b[30:23]);											// Execption sets to 1 when exponent of any a or b is 255
-																// If exponent is 0, hidden bit is 0
-
-
-
-assign op_a = (|a[30:23]) ? {1'b1,a[22:0]} : {1'b0,a[22:0]};
-
-assign op_b = (|b[30:23]) ? {1'b1,b[22:0]} : {1'b0,b[22:0]};
-
-assign product = op_a * op_b;													// Product
-
-assign product_round = |product_normalised[22:0];  									        // Last 22 bits are ORed for rounding off purpose
-
-assign normalised = product[47] ? 1'b1 : 1'b0;	
-
-assign product_normalised = normalised ? product : product << 1;								// Normalized value based on 48th bit
-
-assign product_mantissa = product_normalised[46:24] + {21'b0,(product_normalised[23] & product_round)};				// Mantissa
-
-assign zero = exception ? 1'b0 : (product_mantissa == 23'd0) ? 1'b1 : 1'b0;
-
-assign sum_exponent = a[30:23] + b[30:23];
-
-assign exponent = sum_exponent - 8'd127 + normalised;
-
-assign overflow = ((exponent[8] & !exponent[7]) & !zero) ;									// Overall exponent is greater than 255 then Overflow
-
-assign underflow = ((exponent[8] & exponent[7]) & !zero) ? 1'b1 : 1'b0; 							// Sum of exponents is less than 255 then Underflow 
-
-assign res = exception ? 32'd0 : zero ? {sign,31'd0} : overflow ? {sign,8'hFF,23'd0} : underflow ? {sign,31'd0} : {sign,exponent[7:0],product_mantissa};
-
-
-endmodule
-
-
-// Iteration
-module Iteration(
-	input [31:0] operand_1,
-	input [31:0] operand_2,
-	output [31:0] solution
-	);
-
-wire [31:0] Intermediate_Value1,Intermediate_Value2;
-
-Multiplication M1(operand_1,operand_2,,,,Intermediate_Value1);
-
-//32'h4000_0000 -> 2.
-Addition_Subtraction A1(32'h4000_0000,{1'b1,Intermediate_Value1[30:0]},1'b0,,Intermediate_Value2);
-
-Multiplication M2(operand_1,Intermediate_Value2,,,,solution);
-
-endmodule
-
-// Division
-module division(
-	input [31:0] a,
-	input [31:0] b,
-	output [31:0] res
-);
-
-wire sign;
-wire [7:0] shift;
-wire [7:0] exp_a;
-wire [31:0] divisor;
-wire [31:0] op_a;
-wire [31:0] Intermediate_X0;
-wire [31:0] Iteration_X0;
-wire [31:0] Iteration_X1;
-wire [31:0] Iteration_X2;
-wire [31:0] Iteration_X3;
-wire [31:0] solution;
-wire exception;
-wire [31:0] denominator;
-wire [31:0] op_a_change;
+  
+  always @ ( i_divisor, i_dividend, expA, expB) begin 
+    dividend = i_dividend;
+    divisor = i_divisor;
+    done = 0;
+    quotient=0;
+    exponent_diff = 0;
+    first_bit = 0;
+    stateA=0;
+    stateB=0;
+    next_stateA=0;
+    next_stateB=0;
+        
+    
+    
+    
+    if (divisor[31:0] == 32'b0 && expB[7:0] == 8'b0 && done == 1'b0) begin
+      done = 1'b1;
+      result = 23'b0;
+      expo = 8'b0;
+    end
+    if (dividend[31:0] == 32'b0 && expA[7:0] == 8'b0 && done == 1'b0) begin
+      result = 23'b0;
+      expo = 8'b0;
+      done = 1'b1;
+    end
+    if(done == 1'b0) begin
+      
+      for(i=0; i<32; i=i+1) begin
+      stateA=next_stateA;
+      case (stateA)
+      0: next_stateA=1;
+      1: begin
+      
+      if (quotient[23] != 1'b1) begin
+        next_stateA=1;
+        if (dividend >= divisor) begin
+          dividend = dividend - divisor;    // here we just subtract the divisor from the dividend and shift the dividend left.
+          dividend = dividend << 1;
+          quotient = {quotient[22:0], 1'b1}; // this is to shift the quotient left and add 1 to the lsb.
+          if (first_bit == 1'b0) begin
+            first_bit = 1'b1;
+          end
+        end else begin
+          dividend = dividend << 1;
+          quotient = {quotient[22:0], 1'b0};
+          if (first_bit == 1'b0) begin             //until we get the first bit i.e. the first time the divisor is less than the dividend the exponent value will decrease
+            exponent_diff = exponent_diff + 1;
+          end
+        end
+        end
+      else
+            next_stateA=2;
+      end    
+      2: next_stateA=2;
+      default: next_stateA=0;
+      endcase      
+      end
+
+        
+        if (dividend[31:0] == 32'b0 && done == 1'b0) begin
+        for(i=0; i<32; i=i+1) begin
+        stateB=next_stateB;
+        case (stateB)
+        0: next_stateB=1;
+        1: begin
+        
+          if (quotient[23] != 1'b1) begin
+            next_stateB=1;
+            quotient = quotient << 1;
+            if(first_bit == 1'b0) begin           // if we haven got a first_bit by now give output 0.
+              result = 23'b0;
+              expo = 8'b0;
+              done = 1'b1;
+              //break;
+            end
+          end
+          
+          else
+              next_stateB=2;
+          end    
+          2: next_stateB=2;
+          default: next_stateB=0;
+          endcase      
+         end
+          
+          
+        end
+      
+      
+      
+      end
+      
+      if (done == 1'b0) begin
+        expo = expA - expB +8'd127;
+        //get_exp exp_out (.A(expA), .B(expB), .exp(expo));
+        expo = expo - exponent_diff;
+        if (expo[7] == 0 && expA >= 128 && expB < 128) begin
+          done = 1'b1;
+        end else if (expo[7] == 1 && expA < 128 && expB >= 128) begin
+          done = 1'b1;
+        end
+        if (quotient[23] == 1) begin
+          result = quotient[22:0];
+          done = 1'b1;
+        end
+      end
+    end
+  
+
+
+endmodule // division
+
+//This module is the main module where all the sub modules will be included
+
+module fpdiv(AbyB, InputA, InputB);
+input [31:0] InputA, InputB;
+output [31:0] AbyB;
+wire [7:0]  expAbyB;
+wire [22:0]  mantAbyB;
+wire  signAbyB;
+wire [32:0] temp_divisor, temp_dividend;
 wire case0, casePinf, caseNinf, caseNaN;
 
 // Special Case if B=0 & A is any positive number; (answer=+inf)
-  assign casePinf = (b==32'h00000000 && a[31]==0) ? 1 : 0;
+  assign casePinf = (InputB==32'h00000000 && InputA[31]==0) ? 1 : 0;
          
 // Special Case if B=0 & A is any negative number; (answer=-inf)
-  assign caseNinf = (b==32'h00000000 & a[31]==1) ? 1 : 0;
+  assign caseNinf = (InputB==32'h00000000 & InputA[31]==1) ? 1 : 0;
 
 // Special Case if B=0 & A=0; (answer=NaN)
-  assign caseNaN = (b[30:0]==0 & a[30:0]==0) ? 1 : 0;
+  assign caseNaN = (InputB[30:0]==0 & InputA[30:0]==0) ? 1 : 0;
 
 // Special Case if B=+inf & A is any positive number; (answer=+0.0)
 // Special Case if B=-inf & A is any negative number; (answer=0.0)
 // Special Case if A=0; (answer=0.0)
   
-  assign case0 = (a==32'h0) | (a==32'h80000000) | (b==32'h7F800000) | (b==32'hFF800000) ? 1 : 0;
+  assign case0 = (InputA==32'h0) | (InputA==32'h80000000) | (InputB==32'h7F800000) | (InputB==32'hFF800000) ? 1 : 0;
 
 
 
-  
-  
-  
-assign exception = (&a[30:23]) | (&b[30:23]);
 
-assign sign = a[31] ^ b[31];
+assign temp_divisor = {1'b1,InputB[23:0],7'd0};
+assign temp_dividend = {1'b1,InputA[23:0],7'd0};
+get_sign s_out (.A(InputA[31]), .B(InputB[31]), .sign(signAbyB));
+division divide (.i_divisor({1'b1,InputB[22:0],8'd0}), 
+                 .i_dividend({1'b1,InputA[22:0],8'd0}), 
+                 .result(mantAbyB), 
+                 .expo(expAbyB), 
+                 .expA(InputA[30:23]), .expB(InputB[30:23]));
+                 
+                    // ZERO = 32'h0;
+                    // Pinf = 32'h7F800000
+                    // Ninf = 32'hFF800000
+                    // NaN = 32'hFFFFFFFFF
+                 
+                 // GENERAL CASE
+assign AbyB = case0 ? 0 :  casePinf ? 32'h7F800000 : caseNinf ? 32'hFF800000 : caseNaN ? 32'h7FFFFFF0 :  {signAbyB,expAbyB,mantAbyB};
 
-assign shift = 8'd126 - b[30:23];
-
-assign divisor = {1'b0,8'd126,b[22:0]};
-
-assign denominator = divisor;
-
-assign exp_a = a[30:23] + shift;
-
-assign op_a = {a[31],exp_a,a[22:0]};
-
-assign op_a_change = op_a;
-
-//32'hC00B_4B4B = (-37)/17
-Multiplication x0(32'hC00B_4B4B,divisor,,,,Intermediate_X0);
-
-//32'h4034_B4B5 = 48/17
-Addition_Subtraction X0(Intermediate_X0,32'h4034_B4B5,1'b0,,Iteration_X0);
-
-Iteration X1(Iteration_X0,divisor,Iteration_X1);
-
-Iteration X2(Iteration_X1,divisor,Iteration_X2);
-
-Iteration X3(Iteration_X2,divisor,Iteration_X3);
-
-Multiplication ENDING(Iteration_X3,op_a,,,,solution);
-
-
-// ZERO = 32'h0;
-// Pinf = 32'h7F800000
-// Ninf = 32'hFF800000
-// NaN = 32'hFFFFFFFFF
-
-// GENERAL CASE
-assign res = case0 ? 0 :  casePinf ? 32'h7F800000 : caseNinf ? 32'hFF800000 : caseNaN ? 32'h7FFFFFF0 :  {sign,solution[30:0]};
-
+//assign AbyB = {signAbyB,expAbyB,mantAbyB};
 
 endmodule
