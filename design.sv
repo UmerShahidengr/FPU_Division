@@ -166,13 +166,19 @@ wire [32:0] temp_divisor, temp_dividend;
 wire case0, casePinf, caseNinf, caseNaN;
 
 // Special Case if B=0 & A is any positive number; (answer=+inf)
-  assign casePinf = (InputB==32'h00000000 && InputA[31]==0) ? 1 : 0;
+// Special Case if A=+inf & B is any positive number; (answer=+inf)  
+  assign casePinf = (InputB==32'h00000000 && InputA[31]==0) | 
+    				(InputA==32'h7F800000 && InputB[31]==0) ? 1 : 0;
          
 // Special Case if B=0 & A is any negative number; (answer=-inf)
-  assign caseNinf = (InputB==32'h00000000 & InputA[31]==1) ? 1 : 0;
+  // Special Case if A=+inf & B is any positive number; (answer=-inf)  
+  assign caseNinf = (InputB==32'h00000000 & InputA[31]==1) |
+    				(InputA==32'h7F800000 && InputB[31]==1) ? 1 : 0;
 
 // Special Case if B=0 & A=0; (answer=NaN)
-  assign caseNaN = (InputB[30:0]==0 & InputA[30:0]==0) ? 1 : 0;
+  assign caseNaN = (InputB[30:0]==0 & InputA[30:0]==0) |
+    (InputA[30:23]==8'hFF & InputA!=32'h7F800000) | 
+    (InputB[30:23]==8'hFF & InputB!=32'h7F800000) ? 1 : 0;
 
 // Special Case if B=+inf & A is any positive number; (answer=+0.0)
 // Special Case if B=-inf & A is any negative number; (answer=0.0)
