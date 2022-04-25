@@ -88,8 +88,8 @@ module fpdiv(
                     z_value_o[31]    = a_s ^ b_s;
                     z_value_o[30:23] = 255;
                     z_value_o[22:0]  = 0;
-                    // if b is zero but A is not inf return NaN 
-                  if ((b_e == -127) && (b_m == 0) && (a_e != 128)) begin
+                    // if b is zero return NaN
+                    if ((b_e == -127) && (b_m == 0)) begin
                         z_value_o[31]    = 1;
                         z_value_o[30:23] = 255;
                         z_value_o[22]    = 1;
@@ -251,9 +251,8 @@ module fpdiv(
 
             DONE: begin
                 state         = DONE;
-                i = 500;
             end
-
+            default: state = IDLE;
         endcase
        
             end
